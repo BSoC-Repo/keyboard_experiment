@@ -1,0 +1,1926 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keyboard Layout Experiment</title>
+<meta name="description" content="Interactive resource for a classroom experiment comparing QWERTY and multi-tap keyboard layouts using cardboard prototypes. Human-Computer Interaction, Blackpool and The Fylde College.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+/* =========================================================
+   1. DESIGN TOKENS
+   Brand palette: black, teal, white, light grey panels.
+   Teal (#56b29f) fails contrast as text on white, so it is used
+   as a background with black text. A darker teal is used for
+   text and links on light backgrounds (contrast 6.3:1).
+   ========================================================= */
+:root {
+  --black: #000000;
+  --teal: #56b29f;
+  --teal-dark: #1d6b5b;
+  --teal-tint: #e3f3ef;
+  --white: #ffffff;
+  --panel: #f4f6f8;
+  --line: #d5dbe1;
+  --text: #111111;
+  --muted: #4a5560;
+  --error: #b00020;
+  --success: #1d6b5b;
+  --radius: 10px;
+  --nav-h: 56px;
+  --font: "Atkinson Hyperlegible", "Segoe UI", Arial, sans-serif;
+  --mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+}
+
+/* =========================================================
+   2. BASE STYLES
+   ========================================================= */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--white);
+}
+h1, h2, h3, h4 { line-height: 1.25; margin: 0 0 0.6em; }
+h2 { font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.1rem); }
+h3 { font-size: 1.2rem; }
+p { margin: 0 0 1em; }
+a { color: var(--teal-dark); text-underline-offset: 3px; }
+a:hover { color: var(--black); }
+code, .mono { font-family: var(--mono); }
+b { font-weight: 700; }
+
+/* Visible focus state for every interactive element */
+:focus-visible {
+  outline: 3px solid var(--black);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px var(--teal);
+}
+
+.skip-link {
+  position: absolute; left: 1rem; top: -100px; z-index: 100;
+  background: var(--teal); color: var(--black); padding: 0.6rem 1rem;
+  border-radius: var(--radius); font-weight: 700;
+}
+.skip-link:focus { top: 0.5rem; }
+
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.container { width: min(1120px, 100%); margin: 0 auto; padding: 0 16px; }
+
+/* =========================================================
+   3. HEADER AND STICKY NAVIGATION
+   ========================================================= */
+.site-header { background: var(--black); color: var(--white); padding: 3rem 0 2.5rem; }
+.site-header .eyebrow {
+  display: inline-block; background: var(--teal); color: var(--black);
+  font-weight: 700; font-size: 0.85rem; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 0.25rem 0.65rem; border-radius: 999px; margin-bottom: 1rem;
+}
+.site-header h1 { font-size: clamp(2rem, 1.4rem + 2.6vw, 3.2rem); margin-bottom: 0.4rem; }
+.site-header p { color: #d9dee3; max-width: 60ch; margin: 0; font-size: 1.1rem; }
+.site-header .accent { color: var(--teal); }
+
+.site-nav {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--black); border-bottom: 4px solid var(--teal);
+}
+.site-nav ul {
+  list-style: none; margin: 0 auto; padding: 0 16px; display: flex; gap: 0.25rem;
+  overflow-x: auto; scrollbar-width: thin; width: min(1120px, 100%);
+  min-height: var(--nav-h); align-items: center;
+}
+.site-nav a {
+  display: block; white-space: nowrap; color: var(--white); text-decoration: none;
+  padding: 0.45rem 0.7rem; border-radius: 6px; font-size: 0.95rem;
+}
+.site-nav a:hover { background: #222; color: var(--white); }
+.site-nav a.active, .site-nav a[aria-current="true"] { background: var(--teal); color: var(--black); font-weight: 700; }
+.site-nav a:focus-visible { outline-color: var(--white); box-shadow: 0 0 0 6px var(--teal); }
+
+/* =========================================================
+   4. SECTIONS, PANELS AND CARDS
+   ========================================================= */
+main section { padding: 3.5rem 0; scroll-margin-top: calc(var(--nav-h) + 8px); border-bottom: 1px solid var(--line); }
+main section:nth-of-type(even) { background: var(--panel); }
+.section-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.2rem; height: 2.2rem; border-radius: 50%;
+  background: var(--black); color: var(--teal); font-weight: 700; font-size: 1rem;
+  margin-right: 0.6rem; vertical-align: middle;
+}
+.lead { font-size: 1.15rem; max-width: 70ch; }
+.prose { max-width: 75ch; }
+
+.panel { background: var(--panel); border-radius: var(--radius); padding: 1.25rem 1.5rem; border: 1px solid var(--line); }
+main section:nth-of-type(even) .panel { background: var(--white); }
+.callout {
+  border-left: 6px solid var(--teal); background: var(--teal-tint);
+  padding: 1rem 1.25rem; border-radius: 0 var(--radius) var(--radius) 0; margin: 1.25rem 0;
+}
+.callout p:last-child { margin-bottom: 0; }
+
+.grid { display: grid; gap: 1.25rem; }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+
+.card {
+  background: var(--white); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 1.25rem 1.4rem; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.card h3 { margin-top: 0; }
+.card-top { border-top: 6px solid var(--teal); }
+
+/* Learning outcomes list */
+.outcomes { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem; }
+.outcomes li {
+  display: flex; gap: 0.9rem; align-items: flex-start;
+  background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.9rem 1.1rem;
+}
+.outcomes .lo-num {
+  flex: 0 0 auto; background: var(--teal); color: var(--black); font-weight: 700;
+  border-radius: 6px; padding: 0.1rem 0.55rem; font-size: 0.9rem;
+}
+
+/* Expandable concept cards (native details/summary for accessibility) */
+.concepts { display: grid; gap: 0.9rem; }
+details.concept { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+details.concept summary {
+  cursor: pointer; list-style: none; padding: 1rem 1.25rem; font-weight: 700; font-size: 1.1rem;
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+}
+details.concept summary::-webkit-details-marker { display: none; }
+details.concept summary::after {
+  content: "+"; font-size: 1.5rem; line-height: 1; width: 2rem; height: 2rem; flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--teal); color: var(--black); border-radius: 50%;
+}
+details.concept[open] summary::after { content: "\2212"; }
+details.concept[open] summary { border-bottom: 1px solid var(--line); }
+details.concept .concept-body { padding: 1rem 1.25rem 1.25rem; }
+details.concept .concept-body p:last-child { margin-bottom: 0; }
+.formula {
+  font-family: var(--mono); background: var(--panel); border-radius: 6px; padding: 0.6rem 0.9rem;
+  display: inline-block; margin: 0.25rem 0 0.9rem; font-size: 0.95rem;
+}
+
+/* =========================================================
+   5. BUTTONS AND FORM CONTROLS
+   ========================================================= */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+  font: inherit; font-weight: 700; font-size: 1rem; cursor: pointer;
+  border: 2px solid var(--black); border-radius: 8px; padding: 0.55rem 1.1rem;
+  background: var(--teal); color: var(--black); text-decoration: none; min-height: 44px;
+}
+.btn:hover { background: #6cc3b0; color: var(--black); }
+.btn-dark { background: var(--black); color: var(--white); }
+.btn-dark:hover { background: #2a2a2a; color: var(--white); }
+.btn-outline { background: var(--white); color: var(--black); }
+.btn-outline:hover { background: var(--panel); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0.75rem 0; }
+
+label { font-weight: 700; }
+select, input[type="number"], input[type="text"] {
+  font: inherit; padding: 0.45rem 0.6rem; border: 2px solid var(--muted); border-radius: 6px;
+  background: var(--white); color: var(--text); min-height: 44px;
+}
+input[type="number"] { width: 6.5rem; }
+input.invalid { border-color: var(--error); background: #fff3f5; }
+
+/* =========================================================
+   6. TABLES
+   ========================================================= */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--line); background: var(--white); }
+table { width: 100%; border-collapse: collapse; font-size: 1rem; }
+caption { text-align: left; font-weight: 700; padding: 0.8rem 1rem; background: var(--black); color: var(--white); }
+th, td { padding: 0.7rem 1rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+thead th { background: var(--panel); font-weight: 700; }
+tbody th { font-weight: 700; }
+tr:last-child td, tr:last-child th { border-bottom: 0; }
+tr.highlight td, tr.highlight th { background: var(--teal-tint); }
+tr.highlight th:first-child { box-shadow: inset 6px 0 0 var(--teal); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* =========================================================
+   7. MULTI-TAP AND QWERTY SIMULATORS
+   ========================================================= */
+.sim-controls { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; margin-bottom: 1.25rem; }
+.sim-controls > div { display: flex; flex-direction: column; gap: 0.3rem; }
+.target {
+  font-family: var(--mono); background: var(--black); color: var(--teal); border-radius: 8px;
+  padding: 0.6rem 0.9rem; margin: 0 0 1.25rem; font-size: 1rem; word-break: break-word;
+}
+.target .label { color: #c8ced4; font-family: var(--font); font-size: 0.85rem; display: block; }
+
+.sim h3 { display: flex; align-items: center; gap: 0.5rem; }
+.sim .tag { font-size: 0.8rem; background: var(--black); color: var(--teal); padding: 0.15rem 0.5rem; border-radius: 4px; }
+
+.screen {
+  font-family: var(--mono); font-size: 1.15rem; min-height: 4.2rem;
+  background: #0d1512; color: #eafff9; border-radius: 8px; padding: 0.75rem 0.9rem;
+  word-break: break-word; white-space: pre-wrap; border: 3px solid transparent; cursor: text;
+}
+.screen:focus-visible { border-color: var(--teal); outline: 3px solid var(--black); }
+.screen .pending { background: var(--teal); color: var(--black); border-radius: 3px; padding: 0 1px; }
+.screen .caret { display: inline-block; width: 2px; height: 1.1em; background: var(--teal); vertical-align: text-bottom; animation: blink 1s steps(1) infinite; }
+.screen .placeholder { color: #8fa39c; }
+@keyframes blink { 50% { opacity: 0; } }
+.screen-hint { font-size: 0.85rem; color: var(--muted); margin: 0.35rem 0 0.6rem; }
+
+.timeout-bar { height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; margin: 0.4rem 0 0.75rem; }
+.timeout-bar span { display: block; height: 100%; width: 0; background: var(--teal-dark); }
+.timeout-bar span.run { width: 100%; transition: width 1s linear; }
+
+.status-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.9rem; }
+.pill { background: var(--panel); border: 1px solid var(--line); padding: 0.15rem 0.6rem; border-radius: 999px; }
+.pill.on { background: var(--teal); border-color: var(--black); font-weight: 700; }
+
+.counters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin: 0.75rem 0; }
+.counter { background: var(--black); color: var(--white); border-radius: 8px; padding: 0.55rem 0.6rem; text-align: center; }
+.counter .val { display: block; font-family: var(--mono); font-size: 1.5rem; font-weight: 700; color: var(--teal); }
+.counter .lbl { font-size: 0.8rem; color: #d9dee3; }
+
+/* 12-key keypad */
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; max-width: 340px; margin: 0 auto; }
+.key {
+  font: inherit; cursor: pointer; border: 2px solid var(--black); border-radius: 10px;
+  background: var(--white); color: var(--black); min-height: 60px; padding: 0.35rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1;
+  box-shadow: 0 3px 0 var(--black); transition: transform 0.05s;
+}
+.key:hover { background: var(--teal-tint); }
+.key:active, .key.pressed { transform: translateY(3px); box-shadow: 0 0 0 var(--black); background: var(--teal); }
+.key .digit { font-size: 1.4rem; font-weight: 700; font-family: var(--mono); }
+.key .letters { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.key.func { background: var(--panel); }
+
+/* QWERTY keyboard */
+.qwerty { display: flex; flex-direction: column; gap: 0.35rem; }
+.qrow { display: flex; gap: 0.3rem; justify-content: center; }
+.qkey {
+  font: inherit; font-family: var(--mono); font-weight: 700; cursor: pointer;
+  flex: 1 1 0; max-width: 46px; min-width: 0; min-height: 48px; padding: 0;
+  border: 2px solid var(--black); border-radius: 7px; background: var(--white); color: var(--black);
+  box-shadow: 0 3px 0 var(--black); font-size: 1rem;
+}
+.qkey:hover { background: var(--teal-tint); }
+.qkey:active, .qkey.pressed { transform: translateY(3px); box-shadow: none; background: var(--teal); }
+.qkey.wide { max-width: 80px; flex-grow: 1.6; font-family: var(--font); font-size: 0.8rem; background: var(--panel); }
+.qkey.space { max-width: 280px; flex-grow: 6; font-family: var(--font); font-size: 0.85rem; background: var(--panel); }
+.qkey.on { background: var(--teal); }
+
+.compare-box { margin-top: 1.5rem; }
+.compare-box .result { font-size: 1.05rem; }
+
+/* =========================================================
+   8. QUIZ
+   ========================================================= */
+.quiz { display: grid; gap: 1rem; }
+.quiz fieldset { border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); padding: 1rem 1.25rem; margin: 0; }
+.quiz legend { font-weight: 700; padding: 0 0.4rem; font-size: 1.05rem; }
+.quiz .option { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.4rem 0.5rem; border-radius: 6px; font-weight: 400; cursor: pointer; }
+.quiz .option:hover { background: var(--panel); }
+.quiz input[type="radio"] { width: 1.2rem; height: 1.2rem; margin-top: 0.25rem; accent-color: var(--teal-dark); flex: 0 0 auto; }
+.feedback { margin-top: 0.6rem; padding: 0.6rem 0.9rem; border-radius: 6px; display: none; }
+.feedback.show { display: block; }
+.feedback.correct { background: var(--teal-tint); border-left: 5px solid var(--success); }
+.feedback.incorrect { background: #fdecef; border-left: 5px solid var(--error); }
+.quiz-score { font-weight: 700; font-size: 1.1rem; }
+
+/* =========================================================
+   9. PANGRAM BREAKDOWN
+   ========================================================= */
+.pangram-text { font-family: var(--mono); font-size: 1.2rem; background: var(--black); color: var(--teal); padding: 0.6rem 0.9rem; border-radius: 8px; margin-bottom: 0.9rem; word-break: break-word; }
+.stats { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.9rem; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 0.35rem 0.7rem; font-size: 0.95rem; }
+.stat b { font-family: var(--mono); }
+.chips { display: flex; flex-wrap: wrap; gap: 3px; }
+.chip { display: inline-flex; flex-direction: column; align-items: center; min-width: 1.7rem; border: 1px solid var(--line); border-radius: 4px; background: var(--white); font-family: var(--mono); font-size: 0.85rem; padding: 2px 3px; }
+.chip .c { font-weight: 700; }
+.chip .n { font-size: 0.7rem; color: var(--muted); }
+.chip.p3 { background: #d4ece6; }
+.chip.p4 { background: var(--teal); }
+.chip.p4 .n { color: var(--black); }
+.chip.same { outline: 2px dashed var(--black); outline-offset: -2px; }
+.legend-note { font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem; }
+
+/* =========================================================
+   10. GROUP ALLOCATION
+   ========================================================= */
+.order { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1rem; margin-top: 1rem; }
+.order .step-card { background: var(--black); color: var(--white); border-radius: var(--radius); padding: 1rem 1.2rem; }
+.order .step-card .k { color: var(--teal); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em; }
+.order .step-card .d { font-size: 1.3rem; font-weight: 700; display: block; margin: 0.2rem 0; }
+.order .step-card .p { font-family: var(--mono); font-size: 0.9rem; color: #d9dee3; }
+
+/* =========================================================
+   11. ROLES
+   ========================================================= */
+.role-icon { width: 48px; height: 48px; margin-bottom: 0.5rem; }
+.error-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 0.75rem; list-style: none; padding: 0; margin: 0; }
+.error-list li { background: var(--white); border: 1px solid var(--line); border-left: 6px solid var(--black); border-radius: 6px; padding: 0.7rem 0.9rem; }
+
+/* =========================================================
+   12. PROCEDURE TIMELINE AND STOPWATCH
+   ========================================================= */
+.timeline { list-style: none; padding: 0; margin: 0; counter-reset: step; position: relative; }
+.timeline li { position: relative; padding: 0 0 1.4rem 3.6rem; counter-increment: step; }
+.timeline li::before {
+  content: counter(step); position: absolute; left: 0; top: 0;
+  width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--teal); color: var(--black);
+  font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid var(--black);
+}
+.timeline li::after { content: ""; position: absolute; left: 1.2rem; top: 2.6rem; bottom: 0.2rem; width: 2px; background: var(--black); }
+.timeline li:last-child::after { display: none; }
+.timeline h3 { margin-bottom: 0.25rem; padding-top: 0.35rem; }
+.timeline p { margin: 0; color: var(--muted); }
+
+.stopwatch { background: var(--black); color: var(--white); border-radius: var(--radius); padding: 1.25rem 1.4rem; }
+.stopwatch h3 { color: var(--white); }
+.sw-display { font-family: var(--mono); font-size: clamp(2.8rem, 2rem + 4vw, 4.5rem); font-weight: 700; color: var(--teal); text-align: center; line-height: 1.1; margin: 0.4rem 0 0.2rem; font-variant-numeric: tabular-nums; }
+.sw-state { text-align: center; color: #c8ced4; font-size: 0.9rem; margin-bottom: 0.5rem; }
+.stopwatch .btn-row { justify-content: center; }
+.stopwatch .btn-outline { background: var(--black); color: var(--white); border-color: var(--white); }
+.stopwatch .btn-outline:hover { background: #222; }
+.stopwatch .btn:focus-visible { outline-color: var(--white); }
+.laps { list-style: none; padding: 0; margin: 0.75rem 0 0; max-height: 220px; overflow-y: auto; }
+.laps li { display: flex; justify-content: space-between; gap: 0.5rem; border-top: 1px solid #333; padding: 0.4rem 0.2rem; font-family: var(--mono); font-size: 0.95rem; }
+.laps li .lap-n { color: var(--teal); }
+.laps .empty { color: #c8ced4; font-family: var(--font); }
+.sw-send { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; margin-top: 0.9rem; border-top: 1px solid #333; padding-top: 0.9rem; }
+.sw-send label { color: var(--white); display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; }
+.sw-msg { color: var(--teal); font-size: 0.9rem; min-height: 1.4em; margin-top: 0.4rem; }
+
+/* =========================================================
+   13. RESULTS AND CHART
+   ========================================================= */
+.results-table input[type="number"] { width: 6rem; }
+.results-table td { vertical-align: middle; }
+.results-table .device-head th { background: var(--black); color: var(--white); }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1rem; margin-top: 1.25rem; }
+.summary-card h3 { display: flex; align-items: center; gap: 0.5rem; }
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--black); }
+.summary-card dl { display: grid; grid-template-columns: 1fr auto; gap: 0.35rem 1rem; margin: 0; }
+.summary-card dt { color: var(--muted); }
+.summary-card dd { margin: 0; font-family: var(--mono); font-weight: 700; text-align: right; }
+.chart-card svg { width: 100%; height: auto; display: block; }
+.copy-msg { min-height: 1.5em; color: var(--teal-dark); font-weight: 700; }
+#tsvFallback { width: 100%; min-height: 8rem; font-family: var(--mono); font-size: 0.85rem; margin-top: 0.5rem; display: none; }
+
+/* =========================================================
+   14. SURVEY, ANALYSIS, ASSESSMENT, REFERENCES
+   ========================================================= */
+.part-badge { display: inline-block; background: var(--black); color: var(--teal); font-weight: 700; border-radius: 6px; padding: 0.1rem 0.55rem; margin-bottom: 0.5rem; }
+.survey-cta { margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+.survey-note { color: var(--muted); }
+.prompt-list li { margin-bottom: 0.5rem; }
+.checklist { list-style: none; padding: 0; margin: 0.75rem 0 0; }
+.checklist li { border-top: 1px solid var(--line); }
+.checklist label { display: flex; gap: 0.7rem; align-items: flex-start; padding: 0.55rem 0.2rem; font-weight: 400; cursor: pointer; }
+.checklist input { width: 1.25rem; height: 1.25rem; accent-color: var(--teal-dark); margin-top: 0.2rem; flex: 0 0 auto; }
+.checklist input:checked + span { text-decoration: line-through; color: var(--muted); }
+.progress { height: 10px; background: var(--panel); border-radius: 5px; overflow: hidden; border: 1px solid var(--line); }
+.progress span { display: block; height: 100%; background: var(--teal); width: 0; transition: width 0.25s; }
+.progress-label { font-size: 0.9rem; color: var(--muted); margin: 0.4rem 0 0; }
+.spec { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.25rem 0 0.9rem; }
+.references p { padding-left: 2em; text-indent: -2em; max-width: 85ch; }
+
+.site-footer { background: var(--black); color: #d9dee3; padding: 2rem 0; font-size: 0.95rem; }
+.site-footer a { color: var(--teal); }
+
+/* =========================================================
+   15. RESPONSIVE ADJUSTMENTS
+   ========================================================= */
+@media (max-width: 600px) {
+  main section { padding: 2.5rem 0; }
+  th, td { padding: 0.55rem 0.6rem; }
+  .qrow { gap: 0.2rem; }
+  .qkey { min-height: 44px; font-size: 0.9rem; border-radius: 5px; }
+  .counter .val { font-size: 1.2rem; }
+  .panel, .card { padding: 1rem; }
+}
+/* Projector screens: larger base type */
+@media (min-width: 1600px) {
+  body { font-size: 1.2rem; }
+  .container { width: min(1360px, 100%); }
+}
+
+/* =========================================================
+   16. PRINT STYLESHEET (A4)
+   ========================================================= */
+@media print {
+  @page { size: A4 portrait; margin: 15mm; }
+  html { scroll-behavior: auto; }
+  body { font-size: 10.5pt; color: #000; background: #fff; }
+  .site-nav, .skip-link, .no-print, .btn, .btn-row, .sim-controls, .stopwatch, .sw-send, #tsvFallback { display: none !important; }
+  .site-header { background: #fff; color: #000; padding: 0 0 6mm; border-bottom: 2pt solid #000; }
+  .site-header p { color: #000; }
+  .site-header .eyebrow { border: 1pt solid #000; }
+  main section { padding: 6mm 0; background: #fff !important; break-inside: auto; border-bottom: 0.5pt solid #999; }
+  h2, h3 { break-after: avoid; }
+  .card, .panel, details.concept, .quiz fieldset, table, .summary-card, .chart-card { break-inside: avoid; box-shadow: none; }
+  .section-num { background: #fff; color: #000; border: 1.5pt solid #000; }
+  details.concept summary::after { display: none; }
+  a { color: #000; }
+  .references a::after { content: ""; }
+  .feedback { display: none !important; }
+  input[type="number"] { border: 1px solid #000; }
+  .grid-2, .grid-3, .summary-grid { grid-template-columns: 1fr 1fr; }
+  .site-footer { background: #fff; color: #000; }
+}
+</style>
+</head>
+
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<!-- =========================================================
+     HEADER
+     ========================================================= -->
+<header class="site-header">
+  <div class="container">
+    <span class="eyebrow">Within-subjects experiment &middot; 2 layouts &middot; 4 groups &middot; 3 timed trials per device</span>
+    <h1>Comparing Mobile Keyboard Layouts: <span class="accent">QWERTY and Multi-tap</span></h1>
+    <p>A classroom usability experiment using low-fidelity cardboard prototypes. Use this page before, during and after the session.</p>
+  </div>
+</header>
+
+<!-- =========================================================
+     STICKY NAVIGATION (active link updated on scroll by JS)
+     ========================================================= -->
+<nav class="site-nav" aria-label="Page sections">
+  <ul id="navList">
+    <li><a href="#intro">Introduction</a></li>
+    <li><a href="#outcomes">Outcomes</a></li>
+    <li><a href="#concepts">Concepts</a></li>
+    <li><a href="#simulator">Simulator</a></li>
+    <li><a href="#hypothesis">Hypothesis</a></li>
+    <li><a href="#design">Design</a></li>
+    <li><a href="#pangrams">Pangrams</a></li>
+    <li><a href="#groups">Groups</a></li>
+    <li><a href="#roles">Roles</a></li>
+    <li><a href="#procedure">Procedure</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#survey">Survey</a></li>
+    <li><a href="#analysis">Analysis</a></li>
+    <li><a href="#assessment">Assessment</a></li>
+    <li><a href="#references">References</a></li>
+  </ul>
+</nav>
+
+<main id="main">
+
+<!-- 1. INTRODUCTION -->
+<section id="intro" aria-labelledby="intro-h">
+  <div class="container">
+    <h2 id="intro-h"><span class="section-num" aria-hidden="true">1</span>Introduction</h2>
+    <p class="lead">Conducting research, and analysing and presenting its findings, is a fundamental part of study in higher education. This session gives you first-hand experience of each of these stages within a single, focused experiment.</p>
+    <div class="prose">
+      <p>The experiment compares two mobile keyboard layouts, QWERTY and multi-tap, using low-fidelity cardboard prototypes. Working in pairs, one person enters a short phrase on each prototype while the other times the trial and records any errors. The data you collect will form the basis of an academic poster and a short video presentation.</p>
+      <p>The design is loosely based on MacKenzie and Read (2007), who showed that paper mockups can be used to evaluate keyboard layouts in a classroom setting, and that the results follow the same pattern as studies using working software.</p>
+    </div>
+    <div class="callout">
+      <p><b>Before the session:</b> read the key concepts, try the simulator and find your group number. <b>During the session:</b> use the stopwatch and the results table. <b>After the session:</b> use the analysis guidance and the assessment checklists.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 2. LEARNING OUTCOMES -->
+<section id="outcomes" aria-labelledby="outcomes-h">
+  <div class="container">
+    <h2 id="outcomes-h"><span class="section-num" aria-hidden="true">2</span>Learning outcomes</h2>
+    <p>By the end of this session, you should be able to:</p>
+    <ol class="outcomes">
+      <li><span class="lo-num" aria-hidden="true">LO1</span><span>Conduct a controlled usability experiment using low-fidelity prototypes.</span></li>
+      <li><span class="lo-num" aria-hidden="true">LO2</span><span>Explain how keystrokes per character (KSPC) affects text entry performance.</span></li>
+      <li><span class="lo-num" aria-hidden="true">LO3</span><span>Identify independent, dependent and controlled variables.</span></li>
+      <li><span class="lo-num" aria-hidden="true">LO4</span><span>Apply counterbalancing to reduce order effects.</span></li>
+      <li><span class="lo-num" aria-hidden="true">LO5</span><span>Calculate words per minute (WPM) from recorded entry times.</span></li>
+      <li><span class="lo-num" aria-hidden="true">LO6</span><span>Collect quantitative and qualitative data for analysis.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- 3. KEY CONCEPTS -->
+<section id="concepts" aria-labelledby="concepts-h">
+  <div class="container">
+    <h2 id="concepts-h"><span class="section-num" aria-hidden="true">3</span>Key concepts</h2>
+    <p>Select each card to expand it.</p>
+    <div class="btn-row no-print">
+      <button type="button" class="btn btn-outline" id="expandAll">Expand all</button>
+      <button type="button" class="btn btn-outline" id="collapseAll">Collapse all</button>
+    </div>
+    <div class="concepts">
+      <details class="concept">
+        <summary>Keystrokes per character (KSPC)</summary>
+        <div class="concept-body">
+          <p>KSPC is the average number of key presses needed to produce one character of text. It is a simple way to compare the efficiency of different text entry methods.</p>
+          <p class="formula">KSPC = total key presses &divide; characters entered</p>
+          <p><b>QWERTY</b> has one key per letter, so KSPC is about 1.0. <b>Multi-tap</b> places several letters on each key, and the key is pressed up to four times to reach the required letter, giving a KSPC of about 2.0. For example, "c" needs three presses of the 2 key, and "s" needs four presses of the 7 key.</p>
+          <p>A higher KSPC generally means slower entry and more opportunities for error, although other factors such as familiarity and key size also play a part.</p>
+        </div>
+      </details>
+      <details class="concept">
+        <summary>Low-fidelity prototyping</summary>
+        <div class="concept-body">
+          <p>A low-fidelity prototype is a quick, inexpensive representation of a design, such as a paper sketch or a cardboard mockup. It allows designers to evaluate ideas with users before investing time and money in building a working system.</p>
+          <p>Cardboard prototypes cannot respond to input, so a human observer plays the part of the system by watching and recording. This approach makes it easy to change a design and test again, but it removes realistic features such as tactile and visual feedback.</p>
+        </div>
+      </details>
+      <details class="concept">
+        <summary>Fitts's Law</summary>
+        <div class="concept-body">
+          <p>Fitts's Law predicts that the time taken to move to and select a target depends on the distance to the target and its size. Larger, closer targets are faster to select; smaller, more distant targets are slower.</p>
+          <p class="formula">MT = a + b &times; log<sub>2</sub>(D &divide; W + 1)</p>
+          <p>Here, MT is movement time, D is distance, W is target width, and a and b are constants found by experiment. A multi-tap keypad has fewer, larger keys than a QWERTY layout of the same size, which reduces movement time per press. This partly offsets the extra presses that multi-tap requires.</p>
+        </div>
+      </details>
+      <details class="concept">
+        <summary>Keystroke-Level Model (KLM)</summary>
+        <div class="concept-body">
+          <p>The Keystroke-Level Model predicts how long an expert will take to complete a task by adding together the times of its individual actions. Typical operators include K (pressing a key), P (pointing to a target), H (moving the hand between devices) and M (mental preparation).</p>
+          <p>For this experiment, a simple KLM estimate is the number of key presses multiplied by the average time per press. Because multi-tap needs roughly twice as many presses, KLM predicts that it will take roughly twice as long, if each press takes a similar time.</p>
+        </div>
+      </details>
+      <details class="concept">
+        <summary>Learning effect</summary>
+        <div class="concept-body">
+          <p>Participants usually improve across repeated trials as they become familiar with the task, the phrase and the layout. This is known as a learning effect.</p>
+          <p>Learning effects can distort comparisons between conditions. If every participant used multi-tap second, any improvement from practice would unfairly favour multi-tap. This experiment reduces the problem through a practice run, counterbalancing and matched pangrams. Comparing trial 1 with trial 3 also lets you measure the learning effect directly.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- 4. INTERACTIVE SIMULATOR -->
+<section id="simulator" aria-labelledby="sim-h">
+  <div class="container">
+    <h2 id="sim-h"><span class="section-num" aria-hidden="true">4</span>Interactive multi-tap simulator</h2>
+    <p class="prose">Enter the same phrase on both keyboards and compare the keystroke counts. On the multi-tap keypad, press a key repeatedly to cycle through its letters. A letter is confirmed after a one-second pause or when a different key is pressed. Each keyboard also accepts input from your physical keyboard once its screen is selected.</p>
+
+    <div class="sim-controls">
+      <div>
+        <label for="targetSelect">Target phrase</label>
+        <select id="targetSelect">
+          <option value="a">Pangram A</option>
+          <option value="b">Pangram B</option>
+          <option value="none">Free entry (no target)</option>
+        </select>
+      </div>
+      <button type="button" class="btn btn-outline" id="resetBoth">Reset both keyboards</button>
+    </div>
+    <p class="target" id="targetDisplay" aria-live="polite"></p>
+
+    <div class="grid grid-2">
+      <!-- Multi-tap keypad -->
+      <div class="card sim" role="group" aria-labelledby="mt-h">
+        <h3 id="mt-h">Multi-tap keypad <span class="tag">12 keys</span></h3>
+        <div class="screen" id="mtScreen" tabindex="0" role="textbox" aria-readonly="true" aria-label="Multi-tap text entered. Select and type digits 0 to 9, star or hash to use the keypad."></div>
+        <p class="screen-hint">Physical keyboard: digits 0 to 9, * for shift, # or Backspace to delete.</p>
+        <div class="timeout-bar" aria-hidden="true"><span id="mtTimeout"></span></div>
+        <div class="status-row">
+          <span class="pill" id="mtShift">Shift off</span>
+          <span class="pill" id="mtPendingPill">No letter pending</span>
+        </div>
+        <div class="counters" aria-live="polite">
+          <div class="counter"><span class="val" id="mtPresses">0</span><span class="lbl">Keystrokes</span></div>
+          <div class="counter"><span class="val" id="mtChars">0</span><span class="lbl">Characters</span></div>
+          <div class="counter"><span class="val" id="mtKspc">n/a</span><span class="lbl">KSPC</span></div>
+        </div>
+        <div class="keypad" id="keypad" aria-label="Multi-tap keypad"></div>
+        <div class="btn-row"><button type="button" class="btn btn-outline" id="mtReset">Reset keypad</button></div>
+      </div>
+
+      <!-- QWERTY keyboard -->
+      <div class="card sim" role="group" aria-labelledby="qw-h">
+        <h3 id="qw-h">QWERTY keyboard <span class="tag">one key per letter</span></h3>
+        <div class="screen" id="qwScreen" tabindex="0" role="textbox" aria-readonly="true" aria-label="QWERTY text entered. Select and type letters to use the on-screen keyboard."></div>
+        <p class="screen-hint">Physical keyboard: letters, space, Shift and Backspace.</p>
+        <div class="timeout-bar" aria-hidden="true"><span></span></div>
+        <div class="status-row">
+          <span class="pill" id="qwShift">Shift off</span>
+        </div>
+        <div class="counters" aria-live="polite">
+          <div class="counter"><span class="val" id="qwPresses">0</span><span class="lbl">Keystrokes</span></div>
+          <div class="counter"><span class="val" id="qwChars">0</span><span class="lbl">Characters</span></div>
+          <div class="counter"><span class="val" id="qwKspc">n/a</span><span class="lbl">KSPC</span></div>
+        </div>
+        <div class="qwerty" id="qwerty" aria-label="QWERTY keyboard"></div>
+        <div class="btn-row"><button type="button" class="btn btn-outline" id="qwReset">Reset keyboard</button></div>
+      </div>
+    </div>
+
+    <div class="panel compare-box" aria-live="polite">
+      <h3>Comparison</h3>
+      <p class="result" id="compareText">Enter some text on both keyboards to compare their KSPC.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5. RESEARCH QUESTION AND HYPOTHESIS -->
+<section id="hypothesis" aria-labelledby="hyp-h">
+  <div class="container">
+    <h2 id="hyp-h"><span class="section-num" aria-hidden="true">5</span>Research question and hypothesis</h2>
+    <div class="grid grid-2">
+      <div class="card card-top">
+        <h3>Research question</h3>
+        <p>How does a multi-tap layout compare with a QWERTY layout for text entry speed, accuracy and perceived workload?</p>
+      </div>
+      <div class="card card-top">
+        <h3>Hypothesis</h3>
+        <p>QWERTY will produce faster entry times and fewer errors, because it requires approximately half the key presses per character.</p>
+      </div>
+    </div>
+    <p class="prose" style="margin-top:1.25rem">A good hypothesis is testable and states a direction. Notice that this one makes a prediction about two measurable outcomes (time and errors) and gives a reason grounded in theory (KSPC).</p>
+  </div>
+</section>
+
+<!-- 6. EXPERIMENTAL DESIGN -->
+<section id="design" aria-labelledby="design-h">
+  <div class="container">
+    <h2 id="design-h"><span class="section-num" aria-hidden="true">6</span>Experimental design</h2>
+    <p class="prose">This is a within-subjects design: every participant uses both layouts, so each person acts as their own comparison.</p>
+    <div class="table-wrap">
+      <table>
+        <caption>Variables and controls</caption>
+        <thead><tr><th scope="col">Element</th><th scope="col">In this experiment</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Independent variable</th><td>Keyboard layout (QWERTY or multi-tap)</td></tr>
+          <tr><th scope="row">Dependent variables</th><td>Entry time (seconds); words per minute (WPM); number of errors; perceived workload (NASA-TLX ratings)</td></tr>
+          <tr><th scope="row">Controlled variables</th><td>Same phone size for both prototypes; same hand position; one untimed practice run on each device; lower case letters and spaces only</td></tr>
+          <tr><th scope="row">Counterbalancing</th><td>Four groups vary the order of devices and the pairing of pangrams, so that order and phrase effects are spread evenly across both layouts</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:2rem">Check your knowledge</h3>
+    <p>Choose an answer for each question and select <b>Check answer</b> to see feedback.</p>
+    <form class="quiz" id="quiz" novalidate></form>
+    <p class="quiz-score" id="quizScore" aria-live="polite"></p>
+    <div class="btn-row no-print"><button type="button" class="btn btn-outline" id="quizReset">Reset quiz</button></div>
+  </div>
+</section>
+
+<!-- 7. PANGRAMS -->
+<section id="pangrams" aria-labelledby="pangrams-h">
+  <div class="container">
+    <h2 id="pangrams-h"><span class="section-num" aria-hidden="true">7</span>Pangrams</h2>
+    <p class="prose">A pangram is a sentence that contains every letter of the alphabet at least once. Using pangrams ensures that every key on each layout is used during a trial.</p>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>Pangram A</h3>
+        <p class="pangram-text">sphinx of black quartz judge my vow</p>
+        <div class="stats" id="statsA"></div>
+        <div class="chips" id="chipsA" aria-label="Multi-tap presses for each character of Pangram A"></div>
+      </div>
+      <div class="card">
+        <h3>Pangram B</h3>
+        <p class="pangram-text">how vexingly quick daft zebras jump</p>
+        <div class="stats" id="statsB"></div>
+        <div class="chips" id="chipsB" aria-label="Multi-tap presses for each character of Pangram B"></div>
+      </div>
+    </div>
+    <p class="legend-note">Each chip shows a character and the number of multi-tap presses it needs. Darker chips need more presses. A dashed outline marks a letter on the same key as the letter before it, so the participant must pause before entering it. Spaces are shown as &#9251;.</p>
+
+    <div class="grid grid-2" style="margin-top:1.25rem">
+      <div class="callout">
+        <p><b>Why use two pangrams?</b> If participants entered the same phrase on both devices, the second device would benefit from memorisation of the phrase. Using a different pangram for each device reduces this carry-over effect.</p>
+      </div>
+      <div class="callout">
+        <p><b>Why match them?</b> Both pangrams have 35 characters, and they need almost the same number of multi-tap presses (68 and 69). Matching length and key presses means that any difference in performance can be attributed to the layout rather than to one phrase being harder than the other.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. GROUP ALLOCATION -->
+<section id="groups" aria-labelledby="groups-h">
+  <div class="container">
+    <h2 id="groups-h"><span class="section-num" aria-hidden="true">8</span>Group allocation</h2>
+    <p class="prose">Your tutor will assign each pair to one of four groups. Select your group to highlight your device and pangram order.</p>
+    <div class="sim-controls">
+      <div>
+        <label for="groupSelect">My group</label>
+        <select id="groupSelect">
+          <option value="">Choose a group</option>
+          <option value="1">Group 1</option>
+          <option value="2">Group 2</option>
+          <option value="3">Group 3</option>
+          <option value="4">Group 4</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table id="groupTable">
+        <caption>Counterbalanced group allocation</caption>
+        <thead><tr><th scope="col">Group</th><th scope="col">First device</th><th scope="col">Second device</th></tr></thead>
+        <tbody>
+          <tr data-group="1"><th scope="row">Group 1</th><td>QWERTY with Pangram A</td><td>Multi-tap with Pangram B</td></tr>
+          <tr data-group="2"><th scope="row">Group 2</th><td>QWERTY with Pangram B</td><td>Multi-tap with Pangram A</td></tr>
+          <tr data-group="3"><th scope="row">Group 3</th><td>Multi-tap with Pangram A</td><td>QWERTY with Pangram B</td></tr>
+          <tr data-group="4"><th scope="row">Group 4</th><td>Multi-tap with Pangram B</td><td>QWERTY with Pangram A</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="groupOrder" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- 9. ROLES -->
+<section id="roles" aria-labelledby="roles-h">
+  <div class="container">
+    <h2 id="roles-h"><span class="section-num" aria-hidden="true">9</span>Roles</h2>
+    <div class="grid grid-2">
+      <div class="card card-top">
+        <svg class="role-icon" viewBox="0 0 48 48" role="img" aria-label="Icon of a hand tapping a phone">
+          <rect x="12" y="4" width="24" height="40" rx="4" fill="none" stroke="#000" stroke-width="3"/>
+          <circle cx="24" cy="26" r="6" fill="#56b29f" stroke="#000" stroke-width="2"/>
+        </svg>
+        <h3>Participant</h3>
+        <p>Taps out the pangram on the cardboard prototype, saying each letter aloud. Speaking aloud allows the observer to follow the entry and spot errors, since the cardboard cannot display any text.</p>
+      </div>
+      <div class="card card-top">
+        <svg class="role-icon" viewBox="0 0 48 48" role="img" aria-label="Icon of a stopwatch">
+          <circle cx="24" cy="27" r="16" fill="none" stroke="#000" stroke-width="3"/>
+          <rect x="20" y="4" width="8" height="5" fill="#000"/>
+          <line x1="24" y1="27" x2="24" y2="17" stroke="#56b29f" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+        <h3>Observer</h3>
+        <p>Times each trial, counts errors and records results in the survey. The observer starts timing on the first tap and stops on the final letter, and should remain consistent across every trial.</p>
+      </div>
+    </div>
+    <h3 style="margin-top:2rem">What counts as an error?</h3>
+    <ul class="error-list">
+      <li><b>Wrong key</b><br>The participant presses a key that does not contain the intended letter.</li>
+      <li><b>Missed letter</b><br>A letter in the pangram is skipped.</li>
+      <li><b>Missed space</b><br>The space key is not pressed between words.</li>
+      <li><b>Wrong number of presses</b><br>On multi-tap, the key is pressed too few or too many times.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 10. PROCEDURE -->
+<section id="procedure" aria-labelledby="proc-h">
+  <div class="container">
+    <h2 id="proc-h"><span class="section-num" aria-hidden="true">10</span>Procedure</h2>
+    <div class="grid grid-2">
+      <ol class="timeline">
+        <li><h3>Survey Part A</h3><p>Complete Part A of the Microsoft Forms survey.</p></li>
+        <li><h3>Practice</h3><p>Complete one untimed practice run on each device.</p></li>
+        <li><h3>First device</h3><p>Complete three timed trials on the first device, then complete that section of the survey.</p></li>
+        <li><h3>Second device</h3><p>Complete three timed trials on the second device, then complete that section of the survey, followed by Part C.</p></li>
+        <li><h3>Swap roles</h3><p>Swap roles and repeat.</p></li>
+      </ol>
+
+      <!-- Stopwatch for observers -->
+      <div class="stopwatch" role="group" aria-labelledby="sw-h">
+        <h3 id="sw-h">Observer stopwatch</h3>
+        <p class="sw-display" id="swDisplay" role="timer" aria-live="off">0.0</p>
+        <p class="sw-state" id="swState" aria-live="polite">Ready. Time shown in seconds.</p>
+        <div class="btn-row">
+          <button type="button" class="btn" id="swStart">Start</button>
+          <button type="button" class="btn btn-outline" id="swStop" disabled>Stop</button>
+          <button type="button" class="btn btn-outline" id="swLap" disabled>Record lap</button>
+          <button type="button" class="btn btn-outline" id="swReset">Reset</button>
+        </div>
+        <ol class="laps" id="swLaps" aria-label="Recorded laps"><li class="empty">No laps recorded yet.</li></ol>
+        <div class="sw-send">
+          <label>Send latest time to results table
+            <select id="swTarget">
+              <option value="q-1">QWERTY trial 1</option>
+              <option value="q-2">QWERTY trial 2</option>
+              <option value="q-3">QWERTY trial 3</option>
+              <option value="m-1">Multi-tap trial 1</option>
+              <option value="m-2">Multi-tap trial 2</option>
+              <option value="m-3">Multi-tap trial 3</option>
+            </select>
+          </label>
+          <button type="button" class="btn" id="swSend">Send</button>
+        </div>
+        <p class="sw-msg" id="swMsg" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11. RECORDING AND CALCULATING RESULTS -->
+<section id="results" aria-labelledby="results-h">
+  <div class="container">
+    <h2 id="results-h"><span class="section-num" aria-hidden="true">11</span>Recording and calculating results</h2>
+    <p class="prose">Enter the time and number of errors for each trial. Words per minute are calculated automatically. Each 35-character pangram counts as 7 words (using the standard of five characters per word), so:</p>
+    <p class="formula">WPM = 420 &divide; time in seconds</p>
+
+    <div class="table-wrap">
+      <table class="results-table" id="resultsTable">
+        <caption>Results for three trials per device</caption>
+        <thead>
+          <tr><th scope="col">Device</th><th scope="col">Trial</th><th scope="col">Time (s)</th><th scope="col">Errors</th><th scope="col" class="num">WPM</th></tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+
+    <div class="summary-grid">
+      <div class="card summary-card">
+        <h3><span class="swatch" style="background:#000"></span>QWERTY summary</h3>
+        <dl id="sumQ"></dl>
+      </div>
+      <div class="card summary-card">
+        <h3><span class="swatch" style="background:#56b29f"></span>Multi-tap summary</h3>
+        <dl id="sumM"></dl>
+      </div>
+      <div class="card chart-card">
+        <h3>Mean WPM per device</h3>
+        <div id="chart"></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:1.25rem" aria-live="polite">
+      <p id="kspcCompare" style="margin:0">Complete the table to compare your results with the KSPC prediction.</p>
+    </div>
+
+    <div class="btn-row no-print">
+      <button type="button" class="btn" id="copyTsv">Copy results for Excel</button>
+      <button type="button" class="btn btn-outline" id="fillExample">Fill example data</button>
+      <button type="button" class="btn btn-outline" id="clearResults">Clear table</button>
+    </div>
+    <p class="copy-msg" id="copyMsg" aria-live="polite"></p>
+    <label for="tsvFallback" class="visually-hidden">Results as tab-separated text</label>
+    <textarea id="tsvFallback" readonly></textarea>
+  </div>
+</section>
+
+<!-- 12. THE SURVEY -->
+<section id="survey" aria-labelledby="survey-h">
+  <div class="container">
+    <h2 id="survey-h"><span class="section-num" aria-hidden="true">12</span>The survey</h2>
+    <p class="prose">The Microsoft Forms survey collects both quantitative data (times, errors and ratings) and qualitative data (comments and preferences). It has three parts.</p>
+    <div class="grid grid-3">
+      <div class="card">
+        <span class="part-badge">Part A</span>
+        <h3>Prior experience</h3>
+        <p>Completed before the experiment. Records your experience with QWERTY and multi-tap keyboards, which helps to explain differences between participants.</p>
+      </div>
+      <div class="card">
+        <span class="part-badge">Part B</span>
+        <h3>Results and workload</h3>
+        <p>Completed after each device. Records times and errors, along with workload ratings adapted from the NASA-TLX (Hart and Staveland, 1988), such as mental demand, physical demand, effort and frustration.</p>
+      </div>
+      <div class="card">
+        <span class="part-badge">Part C</span>
+        <h3>Preference and feedback</h3>
+        <p>Completed after both devices. Records which layout you preferred, and why, along with suggestions for improving each design.</p>
+      </div>
+    </div>
+    <div class="survey-cta">
+      <!-- The survey address is also set in the SURVEY_URL constant in the script below. -->
+      <a class="btn btn-dark" id="surveyLink" href="https://forms.cloud.microsoft/e/8rm4zL1hjL" target="_blank" rel="noopener">Open the Microsoft Forms survey<span class="visually-hidden"> (opens in a new tab)</span></a>
+      <span class="survey-note" id="surveyNote" aria-live="polite">Opens in a new tab.</span>
+    </div>
+  </div>
+</section>
+
+<!-- 13. ANALYSIS AND DISCUSSION -->
+<section id="analysis" aria-labelledby="analysis-h">
+  <div class="container">
+    <h2 id="analysis-h"><span class="section-num" aria-hidden="true">13</span>Analysis and discussion</h2>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>Comparing your results</h3>
+        <ul class="prompt-list">
+          <li>Compare the mean WPM and total errors for each device. Which layout was faster, and by how much as a percentage?</li>
+          <li>Compare the size of the difference with the KSPC prediction. Multi-tap needs about 1.95 presses per character, so if each press took the same time, multi-tap WPM would be roughly half of QWERTY WPM.</li>
+          <li>Look at the change from trial 1 to trial 3. Is the learning effect larger for one layout?</li>
+          <li>Combine your data with the class data to obtain a larger sample before drawing conclusions.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Comparing with published research</h3>
+        <p>MacKenzie and Read (2007) found that QWERTY was about 48% faster than a phone keypad, with mean entry rates of 28.1 WPM compared with 19.0 WPM.</p>
+        <div class="callout">
+          <p><b>Important difference:</b> their phone keypad assumed predictive text with one press per letter, whereas this experiment uses multi-tap. You should therefore expect a larger gap between the two layouts in your results. Consider this carefully when comparing your findings with theirs.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-top:1.25rem">
+      <div class="card">
+        <h3>Discussion prompts</h3>
+        <ul class="prompt-list">
+          <li>Did the results support the hypothesis? Explain how the evidence supports or contradicts it.</li>
+          <li>How did the workload ratings differ between the layouts, and do they match the performance data?</li>
+          <li>What did participants say in their qualitative feedback, and does it help to explain the numbers?</li>
+          <li>Would the same pattern appear on a working phone? Justify your answer.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Limitations to consider</h3>
+        <ul class="prompt-list">
+          <li><b>Prior familiarity:</b> most participants use QWERTY daily, which favours that layout.</li>
+          <li><b>No tactile feedback:</b> cardboard keys do not click or display letters, so errors may go unnoticed.</li>
+          <li><b>Observer judgement:</b> errors are counted by eye and ear, and observers may disagree.</li>
+          <li><b>Small sample:</b> a single pair, or even a single class, may not represent the wider population.</li>
+          <li><b>Hand timing:</b> reaction time when starting and stopping the stopwatch adds error to every measurement.</li>
+          <li><b>Pangram matching:</b> the pangrams are matched for length and presses, but Pangram A contains three pairs of consecutive letters on the same key (requiring a pause on multi-tap) while Pangram B contains none.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><b>Suggested follow-up study:</b> add a third condition using an alphabetical layout (one key per letter, A to Z). Like QWERTY, it has a KSPC of 1.0, but it is unfamiliar to participants. Comparing all three layouts would help to separate the effect of familiarity from the effect of key presses.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 14. ASSESSMENT -->
+<section id="assessment" aria-labelledby="assess-h">
+  <div class="container">
+    <h2 id="assess-h"><span class="section-num" aria-hidden="true">14</span>Assessment</h2>
+    <p class="prose">The assessment has two parts. Tick each item as you complete it to track your progress. Ticks are not saved, so they will clear when the page is reloaded.</p>
+    <div class="grid grid-2">
+      <div class="card card-top" data-checklist>
+        <h3>Academic poster</h3>
+        <div class="spec"><span class="pill">A1 portrait</span><span class="pill">800 to 1,000 words</span><span class="pill">PDF</span></div>
+        <div class="progress" aria-hidden="true"><span></span></div>
+        <p class="progress-label" aria-live="polite">0 of 0 complete</p>
+        <ul class="checklist">
+          <li><label><input type="checkbox"><span>Title</span></label></li>
+          <li><label><input type="checkbox"><span>Introduction</span></label></li>
+          <li><label><input type="checkbox"><span>Aim and hypothesis</span></label></li>
+          <li><label><input type="checkbox"><span>Method</span></label></li>
+          <li><label><input type="checkbox"><span>Results (with charts or tables)</span></label></li>
+          <li><label><input type="checkbox"><span>Discussion</span></label></li>
+          <li><label><input type="checkbox"><span>Conclusion</span></label></li>
+          <li><label><input type="checkbox"><span>Harvard references</span></label></li>
+          <li><label><input type="checkbox"><span>Word count between 800 and 1,000</span></label></li>
+          <li><label><input type="checkbox"><span>Saved as an A1 portrait PDF</span></label></li>
+        </ul>
+      </div>
+      <div class="card card-top" data-checklist>
+        <h3>Video presentation</h3>
+        <div class="spec"><span class="pill">5 to 7 minutes</span><span class="pill">Presents the poster</span><span class="pill">MP4</span></div>
+        <div class="progress" aria-hidden="true"><span></span></div>
+        <p class="progress-label" aria-live="polite">0 of 0 complete</p>
+        <ul class="checklist">
+          <li><label><input type="checkbox"><span>Introduction</span></label></li>
+          <li><label><input type="checkbox"><span>Method</span></label></li>
+          <li><label><input type="checkbox"><span>Results</span></label></li>
+          <li><label><input type="checkbox"><span>Discussion</span></label></li>
+          <li><label><input type="checkbox"><span>Conclusion</span></label></li>
+          <li><label><input type="checkbox"><span>Length between 5 and 7 minutes</span></label></li>
+          <li><label><input type="checkbox"><span>Poster visible throughout</span></label></li>
+          <li><label><input type="checkbox"><span>Saved as an MP4 file</span></label></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 15. REFERENCES -->
+<section id="references" aria-labelledby="refs-h" class="references">
+  <div class="container">
+    <h2 id="refs-h"><span class="section-num" aria-hidden="true">15</span>References</h2>
+    <p>Hart, S.G. and Staveland, L.E. (1988) 'Development of NASA-TLX (Task Load Index): results of empirical and theoretical research', <i>Advances in Psychology</i>, 52, pp. 139-183. Available at: <a href="https://doi.org/10.1016/S0166-4115(08)62386-9">https://doi.org/10.1016/S0166-4115(08)62386-9</a></p>
+    <p>MacKenzie, I.S. and Read, J.C. (2007) 'Using paper mockups for evaluating soft keyboard layouts', <i>Proceedings of the 2007 Conference of the Center for Advanced Studies on Collaborative Research (CASCON 2007)</i>. Toronto: IBM, pp. 98-108. Available at: <a href="https://doi.org/10.1145/1321211.1321222">https://doi.org/10.1145/1321211.1321222</a></p>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <p style="margin:0">Blackpool and The Fylde College</p>
+  </div>
+</footer>
+
+<script>
+/* =============================================================
+   SHARED DATA
+   All state is held in JavaScript variables only. Nothing is
+   saved to localStorage or any external store.
+   ============================================================= */
+"use strict";
+
+/** Microsoft Forms survey address. Replace the placeholder text. */
+const SURVEY_URL = "https://forms.cloud.microsoft/e/8rm4zL1hjL";
+
+/** The two matched pangrams. */
+const PANGRAMS = {
+  a: "sphinx of black quartz judge my vow",
+  b: "how vexingly quick daft zebras jump"
+};
+
+/** Multi-tap key map: each key lists the characters it cycles through. */
+const MT_KEYS = {
+  "1": [".", ",", "?", "!"],
+  "2": ["a", "b", "c"],
+  "3": ["d", "e", "f"],
+  "4": ["g", "h", "i"],
+  "5": ["j", "k", "l"],
+  "6": ["m", "n", "o"],
+  "7": ["p", "q", "r", "s"],
+  "8": ["t", "u", "v"],
+  "9": ["w", "x", "y", "z"]
+};
+
+/** Layout of the 12-key pad in reading order, with display labels. */
+const KEYPAD_LAYOUT = [
+  { k: "1", sub: ".,?!" }, { k: "2", sub: "abc" }, { k: "3", sub: "def" },
+  { k: "4", sub: "ghi" },  { k: "5", sub: "jkl" }, { k: "6", sub: "mno" },
+  { k: "7", sub: "pqrs" }, { k: "8", sub: "tuv" }, { k: "9", sub: "wxyz" },
+  { k: "*", sub: "shift", label: "Shift" }, { k: "0", sub: "space", label: "Space" }, { k: "#", sub: "delete", label: "Delete" }
+];
+
+/** Build a reverse lookup: character -> { key, presses }. */
+const CHAR_TO_MT = {};
+Object.keys(MT_KEYS).forEach(function (key) {
+  MT_KEYS[key].forEach(function (ch, i) { CHAR_TO_MT[ch] = { key: key, presses: i + 1 }; });
+});
+CHAR_TO_MT[" "] = { key: "0", presses: 1 };
+
+/**
+ * Analyse a phrase for multi-tap entry.
+ * Returns the number of presses, characters and consecutive same-key pairs.
+ */
+function analysePhrase(phrase) {
+  let presses = 0, sameKey = 0, prevKey = null;
+  const items = [];
+  for (const ch of phrase) {
+    const info = CHAR_TO_MT[ch.toLowerCase()];
+    if (!info) continue;
+    const same = info.key === prevKey && ch !== " ";
+    if (same) sameKey++;
+    presses += info.presses;
+    items.push({ ch: ch, presses: info.presses, same: same });
+    prevKey = info.key;
+  }
+  return { presses: presses, chars: items.length, sameKey: sameKey, items: items };
+}
+
+/** Format a number to a fixed number of decimal places. */
+function fmt(n, dp) { return Number.isFinite(n) ? n.toFixed(dp) : "n/a"; }
+
+/** Escape text before inserting it as HTML. */
+function esc(s) {
+  return s.replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+/** Brief visual "pressed" feedback on a button. */
+function flash(btn) {
+  if (!btn) return;
+  btn.classList.add("pressed");
+  setTimeout(function () { btn.classList.remove("pressed"); }, 120);
+}
+
+/* =============================================================
+   STICKY NAVIGATION: highlight the section currently in view
+   ============================================================= */
+(function initNav() {
+  const links = Array.from(document.querySelectorAll("#navList a"));
+  const byId = {};
+  links.forEach(function (a) { byId[a.getAttribute("href").slice(1)] = a; });
+  const sections = Array.from(document.querySelectorAll("main section[id]"));
+
+  function setActive(id) {
+    links.forEach(function (a) { a.classList.remove("active"); a.removeAttribute("aria-current"); });
+    const link = byId[id];
+    if (!link) return;
+    link.classList.add("active");
+    link.setAttribute("aria-current", "true");
+    // Keep the active link visible in the horizontally scrolling bar
+    const nav = link.closest("ul");
+    const left = link.offsetLeft - nav.clientWidth / 2 + link.clientWidth / 2;
+    nav.scrollTo({ left: left, behavior: "auto" });
+  }
+
+  // Choose the last section whose top has passed a line below the nav
+  function update() {
+    const line = window.innerHeight * 0.3;
+    let current = sections[0].id;
+    sections.forEach(function (s) { if (s.getBoundingClientRect().top <= line) current = s.id; });
+    // At the very bottom of the page, select the final section
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+      current = sections[sections.length - 1].id;
+    }
+    setActive(current);
+  }
+  let ticking = false;
+  window.addEventListener("scroll", function () {
+    if (!ticking) { requestAnimationFrame(function () { update(); ticking = false; }); ticking = true; }
+  }, { passive: true });
+  window.addEventListener("resize", update);
+  update();
+})();
+
+/* =============================================================
+   KEY CONCEPTS: expand or collapse all cards; open them for print
+   ============================================================= */
+(function initConcepts() {
+  const cards = document.querySelectorAll("details.concept");
+  document.getElementById("expandAll").addEventListener("click", function () { cards.forEach(function (d) { d.open = true; }); });
+  document.getElementById("collapseAll").addEventListener("click", function () { cards.forEach(function (d) { d.open = false; }); });
+  // Every card is opened before printing so that no content is lost on paper
+  let previous = [];
+  window.addEventListener("beforeprint", function () {
+    previous = Array.from(cards).map(function (d) { return d.open; });
+    cards.forEach(function (d) { d.open = true; });
+  });
+  window.addEventListener("afterprint", function () {
+    cards.forEach(function (d, i) { d.open = previous[i]; });
+  });
+})();
+
+/* =============================================================
+   MULTI-TAP SIMULATOR
+   ============================================================= */
+const MT_TIMEOUT = 1000; // milliseconds before a pending letter is confirmed
+
+const mt = {
+  text: "",          // all characters entered, including the pending one
+  presses: 0,        // every key press, including shift and delete
+  pendingKey: null,  // key currently cycling, or null
+  index: 0,          // position within the pending key's letters
+  upper: false,      // whether the pending letter is upper case
+  shift: false,      // shift armed for the next letter
+  timer: null
+};
+
+const mtScreen = document.getElementById("mtScreen");
+const mtTimeoutBar = document.getElementById("mtTimeout");
+
+/** Confirm the pending letter (if any) so the next press starts a new one. */
+function mtCommit() {
+  clearTimeout(mt.timer);
+  mt.timer = null;
+  mt.pendingKey = null;
+  mt.index = 0;
+  mtTimeoutBar.classList.remove("run");
+}
+
+/** Restart the one-second confirmation timer and its progress bar. */
+function mtStartTimer() {
+  clearTimeout(mt.timer);
+  mtTimeoutBar.classList.remove("run");
+  void mtTimeoutBar.offsetWidth; // restart the CSS transition
+  mtTimeoutBar.classList.add("run");
+  mt.timer = setTimeout(function () { mtCommit(); mtRender(); }, MT_TIMEOUT);
+}
+
+/** Handle a single press of a multi-tap key. */
+function mtPress(key) {
+  mt.presses++;
+  if (MT_KEYS[key]) {
+    const letters = MT_KEYS[key];
+    if (mt.pendingKey === key) {
+      // Same key again: cycle to the next letter on that key
+      mt.index = (mt.index + 1) % letters.length;
+      const ch = letters[mt.index];
+      mt.text = mt.text.slice(0, -1) + (mt.upper ? ch.toUpperCase() : ch);
+    } else {
+      // Different key: confirm any pending letter and start a new one
+      mtCommit();
+      mt.pendingKey = key;
+      mt.index = 0;
+      mt.upper = mt.shift;
+      mt.shift = false;
+      const ch = letters[0];
+      mt.text += mt.upper ? ch.toUpperCase() : ch;
+    }
+    mtStartTimer();
+  } else if (key === "0") {
+    mtCommit();
+    mt.text += " ";
+  } else if (key === "*") {
+    mtCommit();
+    mt.shift = !mt.shift;
+  } else if (key === "#") {
+    mtCommit();
+    mt.text = mt.text.slice(0, -1);
+  }
+  mtRender();
+}
+
+/** Clear all multi-tap state. */
+function mtReset() {
+  mtCommit();
+  mt.text = ""; mt.presses = 0; mt.shift = false; mt.upper = false;
+  mtRender();
+}
+
+/** Update the screen, counters and status pills. */
+function mtRender() {
+  let html;
+  if (mt.text.length === 0) {
+    html = '<span class="placeholder">Start typing on the keypad</span><span class="caret"></span>';
+  } else if (mt.pendingKey) {
+    html = esc(mt.text.slice(0, -1)) + '<span class="pending">' + esc(mt.text.slice(-1)) + "</span>";
+  } else {
+    html = esc(mt.text) + '<span class="caret"></span>';
+  }
+  mtScreen.innerHTML = html;
+  document.getElementById("mtPresses").textContent = mt.presses;
+  document.getElementById("mtChars").textContent = mt.text.length;
+  document.getElementById("mtKspc").textContent = mt.text.length ? fmt(mt.presses / mt.text.length, 2) : "n/a";
+  const sp = document.getElementById("mtShift");
+  sp.textContent = mt.shift ? "Shift on" : "Shift off";
+  sp.classList.toggle("on", mt.shift);
+  const pp = document.getElementById("mtPendingPill");
+  pp.textContent = mt.pendingKey ? 'Pending: "' + mt.text.slice(-1) + '" (key ' + mt.pendingKey + ")" : "No letter pending";
+  pp.classList.toggle("on", !!mt.pendingKey);
+  updateComparison();
+}
+
+/** Build the on-screen keypad buttons. */
+(function buildKeypad() {
+  const pad = document.getElementById("keypad");
+  KEYPAD_LAYOUT.forEach(function (item) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "key" + (item.label ? " func" : "");
+    b.dataset.key = item.k;
+    b.setAttribute("aria-label", item.label ? "Key " + item.k + ", " + item.label : "Key " + item.k + ", " + item.sub.split("").join(" "));
+    b.innerHTML = '<span class="digit">' + item.k + '</span><span class="letters">' + esc(item.sub) + "</span>";
+    b.addEventListener("click", function () { mtPress(item.k); });
+    pad.appendChild(b);
+  });
+})();
+
+/** Physical keyboard support when the multi-tap screen has focus. */
+mtScreen.addEventListener("keydown", function (e) {
+  let key = null;
+  if (/^[0-9*#]$/.test(e.key)) key = e.key;
+  else if (e.key === "Backspace") key = "#";
+  if (key === null) return;
+  e.preventDefault();
+  flash(document.querySelector('.key[data-key="' + key + '"]'));
+  mtPress(key);
+});
+document.getElementById("mtReset").addEventListener("click", mtReset);
+
+/* =============================================================
+   QWERTY SIMULATOR
+   ============================================================= */
+const qw = { text: "", presses: 0, shift: false };
+const qwScreen = document.getElementById("qwScreen");
+const QWERTY_ROWS = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
+
+/** Handle a QWERTY key press ("shift", "back", "space" or a letter). */
+function qwPress(key) {
+  qw.presses++;
+  if (key === "shift") {
+    qw.shift = !qw.shift;
+  } else if (key === "back") {
+    qw.text = qw.text.slice(0, -1);
+  } else if (key === "space") {
+    qw.text += " ";
+  } else {
+    qw.text += qw.shift ? key.toUpperCase() : key;
+    qw.shift = false;
+  }
+  qwRender();
+}
+
+function qwReset() { qw.text = ""; qw.presses = 0; qw.shift = false; qwRender(); }
+
+function qwRender() {
+  qwScreen.innerHTML = qw.text.length
+    ? esc(qw.text) + '<span class="caret"></span>'
+    : '<span class="placeholder">Start typing on the keyboard</span><span class="caret"></span>';
+  document.getElementById("qwPresses").textContent = qw.presses;
+  document.getElementById("qwChars").textContent = qw.text.length;
+  document.getElementById("qwKspc").textContent = qw.text.length ? fmt(qw.presses / qw.text.length, 2) : "n/a";
+  const sp = document.getElementById("qwShift");
+  sp.textContent = qw.shift ? "Shift on" : "Shift off";
+  sp.classList.toggle("on", qw.shift);
+  const shiftKey = document.querySelector('.qkey[data-key="shift"]');
+  if (shiftKey) { shiftKey.classList.toggle("on", qw.shift); shiftKey.setAttribute("aria-pressed", qw.shift); }
+  updateComparison();
+}
+
+/** Build the on-screen QWERTY keyboard. */
+(function buildQwerty() {
+  const kb = document.getElementById("qwerty");
+  function makeKey(key, label, cls, aria) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "qkey" + (cls ? " " + cls : "");
+    b.dataset.key = key;
+    b.textContent = label;
+    b.setAttribute("aria-label", aria || label);
+    b.addEventListener("click", function () { qwPress(key); });
+    return b;
+  }
+  QWERTY_ROWS.forEach(function (row, r) {
+    const div = document.createElement("div");
+    div.className = "qrow";
+    if (r === 2) div.appendChild(makeKey("shift", "Shift", "wide", "Shift"));
+    row.split("").forEach(function (ch) { div.appendChild(makeKey(ch, ch, "", "Letter " + ch)); });
+    if (r === 2) div.appendChild(makeKey("back", "Delete", "wide", "Delete"));
+    kb.appendChild(div);
+  });
+  const last = document.createElement("div");
+  last.className = "qrow";
+  last.appendChild(makeKey("space", "Space", "space", "Space"));
+  kb.appendChild(last);
+})();
+
+/** Physical keyboard support when the QWERTY screen has focus. */
+qwScreen.addEventListener("keydown", function (e) {
+  let key = null;
+  if (/^[a-zA-Z]$/.test(e.key)) {
+    // Count a physical Shift + letter as two presses, matching the on-screen keyboard
+    if (e.key !== e.key.toLowerCase() && !qw.shift) qwPress("shift");
+    key = e.key.toLowerCase();
+  }
+  else if (e.key === " ") key = "space";
+  else if (e.key === "Backspace") key = "back";
+  if (key === null) return;
+  e.preventDefault();
+  flash(document.querySelector('.qkey[data-key="' + key + '"]'));
+  qwPress(key);
+});
+document.getElementById("qwReset").addEventListener("click", qwReset);
+
+/* =============================================================
+   TARGET PHRASE AND KSPC COMPARISON
+   ============================================================= */
+const targetSelect = document.getElementById("targetSelect");
+
+function renderTarget() {
+  const v = targetSelect.value;
+  const el = document.getElementById("targetDisplay");
+  if (v === "none") {
+    el.innerHTML = '<span class="label">Free entry</span>Type any phrase on both keyboards.';
+  } else {
+    const p = PANGRAMS[v];
+    const a = analysePhrase(p);
+    el.innerHTML = '<span class="label">Target phrase (' + a.chars + " characters, " + a.presses +
+      " multi-tap presses, " + a.chars + " QWERTY presses)</span>" + esc(p);
+  }
+  updateComparison();
+}
+
+/** Compare the two keyboards and check progress against the target. */
+function updateComparison() {
+  const out = document.getElementById("compareText");
+  if (!out) return;
+  const parts = [];
+  const target = targetSelect.value !== "none" ? PANGRAMS[targetSelect.value] : null;
+  if (mt.text.length && qw.text.length) {
+    const kM = mt.presses / mt.text.length, kQ = qw.presses / qw.text.length;
+    parts.push("Multi-tap KSPC is <b>" + fmt(kM, 2) + "</b> and QWERTY KSPC is <b>" + fmt(kQ, 2) +
+      "</b>. Multi-tap needed <b>" + fmt(kM / kQ, 2) + " times</b> as many presses per character.");
+  } else {
+    parts.push("Enter some text on both keyboards to compare their KSPC.");
+  }
+  if (target) {
+    [["Multi-tap", mt.text], ["QWERTY", qw.text]].forEach(function (pair) {
+      if (!pair[1].length) return;
+      const t = pair[1].toLowerCase();
+      if (t === target) parts.push(pair[0] + ": target phrase entered correctly.");
+      else if (target.indexOf(t) === 0) parts.push(pair[0] + ": on track (" + t.length + " of " + target.length + " characters).");
+      else parts.push(pair[0] + ": the text no longer matches the target phrase.");
+    });
+  }
+  out.innerHTML = parts.join(" ");
+}
+
+targetSelect.addEventListener("change", renderTarget);
+document.getElementById("resetBoth").addEventListener("click", function () { mtReset(); qwReset(); });
+
+mtRender();
+qwRender();
+renderTarget();
+
+/* =============================================================
+   QUIZ: identifying variable types
+   ============================================================= */
+const QUIZ = [
+  {
+    q: "In this experiment, the keyboard layout (QWERTY or multi-tap) is the:",
+    options: ["Independent variable", "Dependent variable", "Controlled variable", "Confounding variable"],
+    answer: 0,
+    feedback: [
+      "Correct. The researcher deliberately changes the keyboard layout to see its effect.",
+      "Not quite. A dependent variable is measured, not changed. The layout is what the researcher changes.",
+      "Not quite. A controlled variable is kept the same. The layout differs between conditions.",
+      "Not quite. A confounding variable is an unwanted influence. The layout is the deliberate manipulation."
+    ]
+  },
+  {
+    q: "Words per minute (WPM) is an example of a:",
+    options: ["Independent variable", "Dependent variable", "Controlled variable", "Qualitative measure"],
+    answer: 1,
+    feedback: [
+      "Not quite. WPM is not chosen by the researcher; it is the outcome that is measured.",
+      "Correct. WPM is measured to see how it depends on the keyboard layout.",
+      "Not quite. WPM changes between trials, so it is not held constant.",
+      "Not quite. WPM is a number calculated from time, so it is quantitative."
+    ]
+  },
+  {
+    q: "Using the same phone size for both cardboard prototypes is an example of a:",
+    options: ["Dependent variable", "Independent variable", "Controlled variable", "Learning effect"],
+    answer: 2,
+    feedback: [
+      "Not quite. Phone size is not measured as an outcome.",
+      "Not quite. Phone size is deliberately kept the same, not changed.",
+      "Correct. Keeping phone size constant ensures it cannot explain differences between layouts.",
+      "Not quite. A learning effect is improvement through practice."
+    ]
+  },
+  {
+    q: "Why do Groups 3 and 4 use the multi-tap prototype first?",
+    options: [
+      "To make multi-tap easier to use",
+      "To counterbalance order effects such as practice and fatigue",
+      "To increase the number of key presses",
+      "To give the observer more time to prepare"
+    ],
+    answer: 1,
+    feedback: [
+      "Not quite. The order is not intended to make one layout easier.",
+      "Correct. Half the participants use each layout first, so practice and fatigue affect both layouts equally.",
+      "Not quite. The number of key presses depends on the layout and pangram, not the order.",
+      "Not quite. Observer preparation is not the reason for changing the order."
+    ]
+  },
+  {
+    q: "Most participants use QWERTY every day. In this experiment, prior familiarity is best described as a:",
+    options: ["Dependent variable", "Controlled variable", "Independent variable", "Potential confounding variable"],
+    answer: 3,
+    feedback: [
+      "Not quite. Familiarity is not the outcome being measured.",
+      "Not quite. Familiarity cannot easily be held constant, which is why it is a concern.",
+      "Not quite. Familiarity is not deliberately manipulated by the researcher.",
+      "Correct. Familiarity may favour QWERTY and offer an alternative explanation for the results."
+    ]
+  }
+];
+
+const quizState = QUIZ.map(function () { return null; }); // null, true or false for each question
+
+(function buildQuiz() {
+  const form = document.getElementById("quiz");
+  form.addEventListener("submit", function (e) { e.preventDefault(); });
+  QUIZ.forEach(function (item, qi) {
+    const fs = document.createElement("fieldset");
+    let html = "<legend>Question " + (qi + 1) + ". " + esc(item.q) + "</legend>";
+    item.options.forEach(function (opt, oi) {
+      const id = "q" + qi + "o" + oi;
+      html += '<label class="option" for="' + id + '"><input type="radio" name="q' + qi + '" id="' + id +
+        '" value="' + oi + '"><span>' + esc(opt) + "</span></label>";
+    });
+    html += '<div class="btn-row"><button type="button" class="btn btn-outline" data-check="' + qi + '">Check answer</button></div>';
+    html += '<div class="feedback" id="fb' + qi + '" role="status" aria-live="polite"></div>';
+    fs.innerHTML = html;
+    form.appendChild(fs);
+  });
+  form.addEventListener("click", function (e) {
+    const btn = e.target.closest("[data-check]");
+    if (btn) checkQuestion(Number(btn.dataset.check));
+  });
+})();
+
+/** Mark one question and show feedback for the chosen option. */
+function checkQuestion(qi) {
+  const chosen = document.querySelector('input[name="q' + qi + '"]:checked');
+  const fb = document.getElementById("fb" + qi);
+  fb.className = "feedback show";
+  if (!chosen) {
+    fb.classList.add("incorrect");
+    fb.textContent = "Please choose an answer first.";
+    return;
+  }
+  const oi = Number(chosen.value);
+  const correct = oi === QUIZ[qi].answer;
+  quizState[qi] = correct;
+  fb.classList.add(correct ? "correct" : "incorrect");
+  fb.textContent = QUIZ[qi].feedback[oi];
+  updateQuizScore();
+}
+
+function updateQuizScore() {
+  const answered = quizState.filter(function (s) { return s !== null; }).length;
+  const right = quizState.filter(function (s) { return s === true; }).length;
+  document.getElementById("quizScore").textContent = answered
+    ? "Score: " + right + " out of " + QUIZ.length + " (" + answered + " checked)" : "";
+}
+
+document.getElementById("quizReset").addEventListener("click", function () {
+  document.getElementById("quiz").reset();
+  QUIZ.forEach(function (_, qi) {
+    quizState[qi] = null;
+    const fb = document.getElementById("fb" + qi);
+    fb.className = "feedback"; fb.textContent = "";
+  });
+  updateQuizScore();
+});
+
+/* =============================================================
+   PANGRAM BREAKDOWN (calculated, so the figures are verifiable)
+   ============================================================= */
+(function buildPangrams() {
+  [["a", "A"], ["b", "B"]].forEach(function (pair) {
+    const a = analysePhrase(PANGRAMS[pair[0]]);
+    const letters = new Set(PANGRAMS[pair[0]].replace(/ /g, "")).size;
+    document.getElementById("stats" + pair[1]).innerHTML =
+      '<span class="stat">Characters: <b>' + a.chars + "</b></span>" +
+      '<span class="stat">Multi-tap presses: <b>' + a.presses + "</b></span>" +
+      '<span class="stat">Multi-tap KSPC: <b>' + fmt(a.presses / a.chars, 2) + "</b></span>" +
+      '<span class="stat">Distinct letters: <b>' + letters + "</b></span>" +
+      '<span class="stat">Same-key pauses: <b>' + a.sameKey + "</b></span>";
+    document.getElementById("chips" + pair[1]).innerHTML = a.items.map(function (it) {
+      const cls = "chip" + (it.presses >= 4 ? " p4" : it.presses === 3 ? " p3" : "") + (it.same ? " same" : "");
+      const shown = it.ch === " " ? "&#9251;" : esc(it.ch);
+      const name = it.ch === " " ? "space" : it.ch;
+      return '<span class="' + cls + '" role="img" aria-label="' + name + ", " + it.presses +
+        (it.presses === 1 ? " press" : " presses") + (it.same ? ", same key as previous letter" : "") +
+        '"><span class="c" aria-hidden="true">' + shown + '</span><span class="n" aria-hidden="true">' + it.presses + "</span></span>";
+    }).join("");
+  });
+})();
+
+/* =============================================================
+   GROUP ALLOCATION SELECTOR
+   ============================================================= */
+const GROUPS = {
+  "1": [["QWERTY", "a"], ["Multi-tap", "b"]],
+  "2": [["QWERTY", "b"], ["Multi-tap", "a"]],
+  "3": [["Multi-tap", "a"], ["QWERTY", "b"]],
+  "4": [["Multi-tap", "b"], ["QWERTY", "a"]]
+};
+
+document.getElementById("groupSelect").addEventListener("change", function () {
+  const g = this.value;
+  document.querySelectorAll("#groupTable tbody tr").forEach(function (tr) {
+    const on = tr.dataset.group === g;
+    tr.classList.toggle("highlight", on);
+    if (on) tr.setAttribute("aria-current", "true"); else tr.removeAttribute("aria-current");
+  });
+  const out = document.getElementById("groupOrder");
+  if (!g) { out.innerHTML = ""; return; }
+  const steps = GROUPS[g];
+  out.innerHTML = '<div class="order">' + steps.map(function (s, i) {
+    return '<div class="step-card"><span class="k">' + (i === 0 ? "First device" : "Second device") +
+      '</span><span class="d">' + s[0] + '</span><span class="p">Pangram ' + s[1].toUpperCase() + ': "' +
+      PANGRAMS[s[1]] + '"</span></div>';
+  }).join("") + "</div>";
+});
+
+/* =============================================================
+   STOPWATCH
+   ============================================================= */
+const sw = { running: false, start: 0, elapsed: 0, raf: null, laps: [] };
+const swDisplay = document.getElementById("swDisplay");
+
+/** Current elapsed time in milliseconds. */
+function swNow() { return sw.running ? sw.elapsed + (performance.now() - sw.start) : sw.elapsed; }
+
+/** Seconds to one decimal place. Truncated (not rounded) so it never runs ahead. */
+function swFormat(ms) { return (Math.floor(ms / 100) / 10).toFixed(1); }
+
+function swTick() {
+  swDisplay.textContent = swFormat(swNow());
+  if (sw.running) sw.raf = requestAnimationFrame(swTick);
+}
+
+function swButtons() {
+  document.getElementById("swStart").disabled = sw.running;
+  document.getElementById("swStop").disabled = !sw.running;
+  document.getElementById("swLap").disabled = !sw.running;
+  document.getElementById("swStart").textContent = sw.elapsed > 0 && !sw.running ? "Resume" : "Start";
+}
+
+function swStart() {
+  if (sw.running) return;
+  sw.running = true; sw.start = performance.now();
+  document.getElementById("swState").textContent = "Running.";
+  swButtons(); swTick();
+  document.getElementById("swStop").focus();
+}
+
+function swStop() {
+  if (!sw.running) return;
+  sw.elapsed += performance.now() - sw.start;
+  sw.running = false;
+  cancelAnimationFrame(sw.raf);
+  swTick();
+  document.getElementById("swState").textContent = "Stopped at " + swFormat(sw.elapsed) + " seconds.";
+  swButtons();
+  document.getElementById("swStart").focus();
+}
+
+function swLap() {
+  if (!sw.running) return;
+  const t = swNow();
+  const prev = sw.laps.length ? sw.laps[sw.laps.length - 1].total : 0;
+  sw.laps.push({ total: t, split: t - prev });
+  swRenderLaps();
+  document.getElementById("swState").textContent = "Lap " + sw.laps.length + " recorded at " + swFormat(t) + " seconds.";
+}
+
+function swReset() {
+  sw.running = false; sw.elapsed = 0; sw.laps = [];
+  cancelAnimationFrame(sw.raf);
+  swDisplay.textContent = "0.0";
+  document.getElementById("swState").textContent = "Ready. Time shown in seconds.";
+  document.getElementById("swMsg").textContent = "";
+  swRenderLaps(); swButtons();
+}
+
+function swRenderLaps() {
+  const list = document.getElementById("swLaps");
+  if (!sw.laps.length) { list.innerHTML = '<li class="empty">No laps recorded yet.</li>'; return; }
+  list.innerHTML = sw.laps.map(function (l, i) {
+    return '<li><span class="lap-n">Lap ' + (i + 1) + "</span><span>split " + swFormat(l.split) +
+      " s</span><span>total " + swFormat(l.total) + " s</span></li>";
+  }).reverse().join("");
+}
+
+/** Send the stopped time (or the latest lap split) into the results table. */
+function swSend() {
+  const msg = document.getElementById("swMsg");
+  let seconds;
+  if (!sw.running && sw.elapsed > 0) seconds = swFormat(sw.elapsed);
+  else if (sw.laps.length) seconds = swFormat(sw.laps[sw.laps.length - 1].split);
+  else { msg.textContent = "Stop the stopwatch or record a lap first."; return; }
+  const target = document.getElementById("swTarget");
+  const input = document.getElementById("time-" + target.value);
+  input.value = seconds;
+  recalc();
+  msg.textContent = seconds + " s sent to " + target.options[target.selectedIndex].text + ".";
+  // Move the selector on to the next trial to save time during the session
+  if (target.selectedIndex < target.options.length - 1) target.selectedIndex++;
+}
+
+document.getElementById("swStart").addEventListener("click", swStart);
+document.getElementById("swStop").addEventListener("click", swStop);
+document.getElementById("swLap").addEventListener("click", swLap);
+document.getElementById("swReset").addEventListener("click", swReset);
+document.getElementById("swSend").addEventListener("click", swSend);
+swButtons();
+
+/* =============================================================
+   RESULTS TABLE, CALCULATIONS AND CHART
+   ============================================================= */
+const DEVICES = [
+  { id: "q", name: "QWERTY", colour: "#000000" },
+  { id: "m", name: "Multi-tap", colour: "#56b29f" }
+];
+const WORDS = 7;                 // 35 characters / 5 characters per word
+const WPM_FACTOR = WORDS * 60;   // 420
+const KSPC_RATIO = analysePhrase(PANGRAMS.a).presses / analysePhrase(PANGRAMS.a).chars; // about 1.94 to 1.97
+
+(function buildResults() {
+  const body = document.getElementById("resultsBody");
+  let html = "";
+  DEVICES.forEach(function (d) {
+    for (let t = 1; t <= 3; t++) {
+      html += "<tr>" +
+        (t === 1 ? '<th scope="rowgroup" rowspan="3">' + d.name + "</th>" : "") +
+        "<td>Trial " + t + "</td>" +
+        '<td><input type="number" id="time-' + d.id + "-" + t + '" min="0.1" step="0.1" inputmode="decimal" aria-label="' + d.name + " trial " + t + ' time in seconds"></td>' +
+        '<td><input type="number" id="err-' + d.id + "-" + t + '" min="0" step="1" inputmode="numeric" aria-label="' + d.name + " trial " + t + ' errors"></td>' +
+        '<td class="num mono" id="wpm-' + d.id + "-" + t + '">n/a</td></tr>';
+    }
+  });
+  body.innerHTML = html;
+  body.addEventListener("input", recalc);
+})();
+
+/** Read a number from an input; returns NaN if blank or invalid. */
+function readNum(id, minExclusive) {
+  const el = document.getElementById(id);
+  const raw = el.value.trim();
+  if (raw === "") { el.classList.remove("invalid"); return NaN; }
+  const n = Number(raw);
+  const bad = !Number.isFinite(n) || (minExclusive ? n <= 0 : n < 0);
+  el.classList.toggle("invalid", bad);
+  return bad ? NaN : n;
+}
+
+function mean(arr) { return arr.length ? arr.reduce(function (a, b) { return a + b; }, 0) / arr.length : NaN; }
+
+/** Signed number with a plus sign for positive values. */
+function signed(n, dp) { return Number.isFinite(n) ? (n > 0 ? "+" : "") + n.toFixed(dp) : "n/a"; }
+
+let lastSummary = {}; // holds calculated results for the chart and the copy feature
+
+/** Recalculate every derived value from the table inputs. */
+function recalc() {
+  lastSummary = {};
+  DEVICES.forEach(function (d) {
+    const times = [], wpms = [], errs = [];
+    const trials = [];
+    for (let t = 1; t <= 3; t++) {
+      const time = readNum("time-" + d.id + "-" + t, true);
+      const err = readNum("err-" + d.id + "-" + t, false);
+      const wpm = Number.isFinite(time) ? WPM_FACTOR / time : NaN;
+      document.getElementById("wpm-" + d.id + "-" + t).textContent = fmt(wpm, 1);
+      if (Number.isFinite(time)) { times.push(time); wpms.push(wpm); }
+      if (Number.isFinite(err)) errs.push(err);
+      trials.push({ time: time, err: err, wpm: wpm });
+    }
+    const s = {
+      trials: trials,
+      meanTime: mean(times),
+      meanWpm: mean(wpms),
+      totalErr: errs.length ? errs.reduce(function (a, b) { return a + b; }, 0) : NaN,
+      timeChange: trials[2].time - trials[0].time,
+      wpmChange: trials[2].wpm - trials[0].wpm
+    };
+    s.wpmChangePct = Number.isFinite(s.wpmChange) ? (s.wpmChange / trials[0].wpm) * 100 : NaN;
+    lastSummary[d.id] = s;
+
+    document.getElementById(d.id === "q" ? "sumQ" : "sumM").innerHTML =
+      "<dt>Mean time</dt><dd>" + fmt(s.meanTime, 1) + " s</dd>" +
+      "<dt>Mean WPM</dt><dd>" + fmt(s.meanWpm, 1) + "</dd>" +
+      "<dt>Total errors</dt><dd>" + (Number.isFinite(s.totalErr) ? s.totalErr : "n/a") + "</dd>" +
+      "<dt>Time change, trial 1 to 3</dt><dd>" + signed(s.timeChange, 1) + (Number.isFinite(s.timeChange) ? " s" : "") + "</dd>" +
+      "<dt>WPM change, trial 1 to 3</dt><dd>" + signed(s.wpmChange, 1) +
+      (Number.isFinite(s.wpmChangePct) ? " (" + signed(s.wpmChangePct, 0) + "%)" : "") + "</dd>";
+  });
+  drawChart();
+  compareWithKspc();
+}
+
+/** Draw a bar chart of mean WPM per device as inline SVG. */
+function drawChart() {
+  const W = 360, H = 240, padL = 40, padR = 12, padT = 24, padB = 36;
+  const vals = DEVICES.map(function (d) { return lastSummary[d.id].meanWpm; });
+  const finite = vals.filter(Number.isFinite);
+  const maxVal = finite.length ? Math.max.apply(null, finite) : 0;
+  // Round the axis up to a tidy multiple of 5
+  const top = Math.max(10, Math.ceil((maxVal * 1.15) / 5) * 5);
+  const plotH = H - padT - padB, plotW = W - padL - padR;
+  const y = function (v) { return padT + plotH - (v / top) * plotH; };
+
+  let svg = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-labelledby="chartTitle chartDesc" xmlns="http://www.w3.org/2000/svg">';
+  svg += '<title id="chartTitle">Bar chart of mean words per minute per device</title>';
+  svg += '<desc id="chartDesc">' + DEVICES.map(function (d, i) {
+    return d.name + ": " + (Number.isFinite(vals[i]) ? vals[i].toFixed(1) + " WPM" : "no data");
+  }).join("; ") + "</desc>";
+
+  // Horizontal grid lines and axis labels
+  const steps = 5;
+  for (let i = 0; i <= steps; i++) {
+    const v = (top / steps) * i, yy = y(v);
+    svg += '<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + yy + '" y2="' + yy + '" stroke="' + (i === 0 ? "#000" : "#d5dbe1") + '" stroke-width="1"/>';
+    svg += '<text x="' + (padL - 6) + '" y="' + (yy + 4) + '" font-size="11" text-anchor="end" fill="#4a5560" font-family="Atkinson Hyperlegible, Arial">' + Math.round(v) + "</text>";
+  }
+  svg += '<text x="12" y="' + (padT + plotH / 2) + '" font-size="11" fill="#4a5560" text-anchor="middle" transform="rotate(-90 12 ' + (padT + plotH / 2) + ')" font-family="Atkinson Hyperlegible, Arial">WPM</text>';
+
+  // One bar per device
+  const slot = plotW / DEVICES.length, barW = Math.min(90, slot * 0.55);
+  DEVICES.forEach(function (d, i) {
+    const cx = padL + slot * i + slot / 2;
+    const v = vals[i];
+    if (Number.isFinite(v)) {
+      const yy = y(v);
+      svg += '<rect x="' + (cx - barW / 2) + '" y="' + yy + '" width="' + barW + '" height="' + (padT + plotH - yy) + '" fill="' + d.colour + '" stroke="#000" stroke-width="1.5" rx="3"/>';
+      svg += '<text x="' + cx + '" y="' + (yy - 6) + '" font-size="13" font-weight="700" text-anchor="middle" fill="#000" font-family="JetBrains Mono, monospace">' + v.toFixed(1) + "</text>";
+    } else {
+      svg += '<text x="' + cx + '" y="' + (padT + plotH - 8) + '" font-size="11" text-anchor="middle" fill="#4a5560" font-family="Atkinson Hyperlegible, Arial">no data</text>';
+    }
+    svg += '<text x="' + cx + '" y="' + (H - padB + 18) + '" font-size="13" font-weight="700" text-anchor="middle" fill="#000" font-family="Atkinson Hyperlegible, Arial">' + d.name + "</text>";
+  });
+  svg += "</svg>";
+  document.getElementById("chart").innerHTML = svg;
+}
+
+/** Compare the observed speed ratio with the KSPC prediction. */
+function compareWithKspc() {
+  const out = document.getElementById("kspcCompare");
+  const q = lastSummary.q.meanWpm, m = lastSummary.m.meanWpm;
+  if (!Number.isFinite(q) || !Number.isFinite(m)) {
+    out.textContent = "Complete the table to compare your results with the KSPC prediction.";
+    return;
+  }
+  const ratio = m / q;
+  const faster = ((q / m) - 1) * 100;
+  out.innerHTML = "Your multi-tap mean WPM is <b>" + fmt(ratio * 100, 0) + "%</b> of your QWERTY mean WPM. " +
+    "QWERTY was <b>" + fmt(faster, 0) + "%</b> " + (faster >= 0 ? "faster" : "slower") + ". " +
+    "If every press took the same time, the KSPC difference predicts that multi-tap would reach about <b>" +
+    fmt(100 / KSPC_RATIO, 0) + "%</b> of QWERTY speed.";
+}
+
+/** Build tab-separated text for pasting into Excel. */
+function buildTsv() {
+  const rows = [["Device", "Trial", "Time (s)", "Errors", "WPM"]];
+  DEVICES.forEach(function (d) {
+    lastSummary[d.id].trials.forEach(function (t, i) {
+      rows.push([d.name, i + 1, Number.isFinite(t.time) ? t.time : "", Number.isFinite(t.err) ? t.err : "", Number.isFinite(t.wpm) ? t.wpm.toFixed(1) : ""]);
+    });
+  });
+  rows.push([]);
+  rows.push(["Device", "Mean time (s)", "Mean WPM", "Total errors", "Time change trial 1 to 3 (s)", "WPM change trial 1 to 3"]);
+  DEVICES.forEach(function (d) {
+    const s = lastSummary[d.id];
+    const c = function (n, dp) { return Number.isFinite(n) ? n.toFixed(dp) : ""; };
+    rows.push([d.name, c(s.meanTime, 1), c(s.meanWpm, 1), c(s.totalErr, 0), c(s.timeChange, 1), c(s.wpmChange, 1)]);
+  });
+  return rows.map(function (r) { return r.join("\t"); }).join("\n");
+}
+
+document.getElementById("copyTsv").addEventListener("click", function () {
+  const text = buildTsv();
+  const msg = document.getElementById("copyMsg");
+  const fallback = document.getElementById("tsvFallback");
+  function showFallback() {
+    // If the clipboard is blocked, show the text so it can be copied manually
+    fallback.value = text;
+    fallback.style.display = "block";
+    fallback.focus(); fallback.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    msg.textContent = ok ? "Results copied. Paste into cell A1 of an Excel sheet."
+      : "Copying was blocked. The results are selected below: press Ctrl+C (or Cmd+C) to copy them.";
+  }
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(function () {
+      fallback.style.display = "none";
+      msg.textContent = "Results copied. Paste into cell A1 of an Excel sheet.";
+    }, showFallback);
+  } else {
+    showFallback();
+  }
+});
+
+document.getElementById("clearResults").addEventListener("click", function () {
+  document.querySelectorAll("#resultsBody input").forEach(function (i) { i.value = ""; i.classList.remove("invalid"); });
+  document.getElementById("copyMsg").textContent = "";
+  document.getElementById("tsvFallback").style.display = "none";
+  recalc();
+});
+
+/** Example data so students can see how the calculations work. */
+document.getElementById("fillExample").addEventListener("click", function () {
+  const example = { q: [[24.6, 2], [22.1, 1], [20.3, 1]], m: [[58.4, 5], [51.2, 3], [47.9, 2]] };
+  Object.keys(example).forEach(function (id) {
+    example[id].forEach(function (row, i) {
+      document.getElementById("time-" + id + "-" + (i + 1)).value = row[0];
+      document.getElementById("err-" + id + "-" + (i + 1)).value = row[1];
+    });
+  });
+  recalc();
+  document.getElementById("copyMsg").textContent = "Example data added. Select Clear table before entering your own results.";
+});
+
+recalc();
+
+/* =============================================================
+   SURVEY LINK PLACEHOLDER
+   ============================================================= */
+(function initSurvey() {
+  const link = document.getElementById("surveyLink");
+  const note = document.getElementById("surveyNote");
+  const ready = /^https?:\/\//.test(SURVEY_URL);
+  if (ready) {
+    link.href = SURVEY_URL;
+    note.textContent = "Opens in a new tab.";
+  } else {
+    link.addEventListener("click", function (e) {
+      e.preventDefault();
+      note.textContent = "[Survey link] Your tutor will share the survey link during the session.";
+    });
+  }
+})();
+
+/* =============================================================
+   ASSESSMENT CHECKLISTS: progress counters (not saved)
+   ============================================================= */
+document.querySelectorAll("[data-checklist]").forEach(function (card) {
+  const boxes = card.querySelectorAll('input[type="checkbox"]');
+  const bar = card.querySelector(".progress span");
+  const label = card.querySelector(".progress-label");
+  function update() {
+    const done = Array.from(boxes).filter(function (b) { return b.checked; }).length;
+    bar.style.width = (done / boxes.length) * 100 + "%";
+    label.textContent = done + " of " + boxes.length + " complete" + (done === boxes.length ? ". Ready to submit." : "");
+  }
+  boxes.forEach(function (b) { b.addEventListener("change", update); });
+  update();
+});
+</script>
+</body>
+</html>
